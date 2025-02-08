@@ -1,0 +1,9 @@
+.dark-mode-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-color);
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  
