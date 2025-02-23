@@ -1,0 +1,112 @@
+.docs-main {
+    padding-top: 80px;
+    /* Space for navbar */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.docs-main h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: var(--text);
+}
+
+.docs-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+.docs-section {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.docs-section:hover {
+    transform: translateY(-2px);
+}
+
+.docs-section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.docs-section p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.quick-start {
+    background: var(--hover);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.quick-start:hover {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.1);
+}
+
+.quick-start h3 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.quick-start ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+}
+
+.quick-start li {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    transition: background-color 0.3s ease;
+    border-radius: 4px;
+}
+
+.quick-start li:hover {
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.code-block {
+    background: var(--hover);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.code-block:hover {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.1);
+}
+
+.code-block code {
+    display: block;
+    font-family: monospace;
+    line-height: 1.6;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .docs-main {
+        padding-top: 60px;
+    }
+
+    .docs-main h1 {
+        font-size: 2rem;
+    }
+
+    .docs-section h2 {
+        font-size: 1.25rem;
+    }
+
+    .quick-start,
+    .code-block {
+        padding: 1rem;
+    }
+}
