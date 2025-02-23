@@ -11,4 +11,6 @@ Don't run the scraper.py file, it will erase manually added Google Scholar links
 4. Analyse the data using visualisation.py and community.py
 
 
-
+Manual Steps:
+Added Google Scholar links to data/iit_faculty_info.csv
+Added Crossref data to data/details.csv
