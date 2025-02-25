@@ -64,7 +64,7 @@ nx.draw_networkx_labels(G, pos,
                                 pad=0.5))
 
 # Improve plot appearance
-plt.title("Co-Authorship Network", fontsize=10, pad=20)
+plt.title("Co-Authorship Network", fontsize=16, pad=5)
 plt.axis('off')
 plt.tight_layout()
 plt.show()

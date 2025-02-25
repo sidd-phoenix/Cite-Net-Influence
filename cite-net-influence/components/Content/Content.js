@@ -1,263 +1,204 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Content.css';
 
 export default function Content() {
+    const [universities, setUniversities] = useState([]);
+    const [professors, setProfessors] = useState([]);
     const [showDetails, setShowDetails] = useState(false);
     const [selectedUniv1, setSelectedUniv1] = useState('');
     const [selectedUniv2, setSelectedUniv2] = useState('');
+    const [selectedDept1, setSelectedDept1] = useState('');
+    const [selectedDept2, setSelectedDept2] = useState('');
     const [selectedProf1, setSelectedProf1] = useState('');
     const [selectedProf2, setSelectedProf2] = useState('');
+    const [departments, setDepartments] = useState({});
+    const [professorsByDept, setProfessorsByDept] = useState({});
 
-    // Dummy university data
-    const universities = [
-        { id: 1, name: "Stanford University" },
-        { id: 2, name: "MIT" },
-        { id: 3, name: "Harvard University" },
-        { id: 4, name: "UC Berkeley" },
-        // Add more universities...
-    ];
+    // Fetch universities and departments data
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Get universities
+                const response = await fetch('/api/universities');
+                const univList = await response.json();
+                
+                setUniversities(univList.map((univ, index) => ({
+                    id: index + 1,
+                    name: univ
+                })));
 
-    // Dummy professor data with university IDs
-    const professors = [
-        // Stanford Professors (universityId: 1)
-        {
-            id: 1,
-            name: "Prof. Alan Smith",
-            universityId: 1,
-            department: "Computer Science",
-            metrics: {
-                hIndex: 85,
-                i10Index: 245,
-                citations: 52000,
-                coAuthors: 120,
-                publications: 320,
-                yearsActive: 25,
-                topField: "Machine Learning",
-                recentCitations: 12000
+                // Initialize departments data structure
+                const deptData = {};
+                
+                // Fetch departments for each university
+                for (const univ of univList) {
+                    const deptResponse = await fetch(`/api/departments/${encodeURIComponent(univ)}`);
+                    const deptList = await deptResponse.json();
+                    deptData[univ] = deptList;
+                }
+                
+                setDepartments(deptData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
             }
-        },
-        {
-            id: 2,
-            name: "Prof. Sarah Johnson",
-            universityId: 1,
-            department: "Artificial Intelligence",
-            metrics: {
-                hIndex: 78,
-                i10Index: 210,
-                citations: 45000,
-                coAuthors: 95,
-                publications: 280,
-                yearsActive: 20,
-                topField: "Deep Learning",
-                recentCitations: 15000
-            }
-        },
-        {
-            id: 3,
-            name: "Prof. David Chen",
-            universityId: 1,
-            department: "Data Science",
-            metrics: {
-                hIndex: 92,
-                i10Index: 300,
-                citations: 65000,
-                coAuthors: 150,
-                publications: 400,
-                yearsActive: 28,
-                topField: "Big Data Analytics",
-                recentCitations: 18000
-            }
-        },
+        };
 
-        // MIT Professors (universityId: 2)
-        {
-            id: 4,
-            name: "Prof. Maria Garcia",
-            universityId: 2,
-            department: "Computer Science",
-            metrics: {
-                hIndex: 92,
-                i10Index: 280,
-                citations: 68000,
-                coAuthors: 150,
-                publications: 380,
-                yearsActive: 28,
-                topField: "Artificial Intelligence",
-                recentCitations: 15000
-            }
-        },
-        {
-            id: 5,
-            name: "Prof. James Wilson",
-            universityId: 2,
-            department: "Robotics",
-            metrics: {
-                hIndex: 88,
-                i10Index: 260,
-                citations: 55000,
-                coAuthors: 130,
-                publications: 340,
-                yearsActive: 23,
-                topField: "Robot Learning",
-                recentCitations: 14000
-            }
-        },
-        {
-            id: 6,
-            name: "Prof. Emily Brown",
-            universityId: 2,
-            department: "AI Ethics",
-            metrics: {
-                hIndex: 75,
-                i10Index: 200,
-                citations: 42000,
-                coAuthors: 85,
-                publications: 250,
-                yearsActive: 18,
-                topField: "Ethical AI",
-                recentCitations: 11000
-            }
-        },
+        fetchData();
+    }, []);
 
-        // Harvard Professors (universityId: 3)
-        {
-            id: 7,
-            name: "Prof. Michael Taylor",
-            universityId: 3,
-            department: "Computer Science",
-            metrics: {
-                hIndex: 95,
-                i10Index: 320,
-                citations: 72000,
-                coAuthors: 160,
-                publications: 420,
-                yearsActive: 30,
-                topField: "Natural Language Processing",
-                recentCitations: 20000
-            }
-        },
-        {
-            id: 8,
-            name: "Prof. Lisa Anderson",
-            universityId: 3,
-            department: "Machine Learning",
-            metrics: {
-                hIndex: 82,
-                i10Index: 240,
-                citations: 48000,
-                coAuthors: 110,
-                publications: 300,
-                yearsActive: 22,
-                topField: "Computer Vision",
-                recentCitations: 13000
-            }
-        },
-        {
-            id: 9,
-            name: "Prof. Robert Kim",
-            universityId: 3,
-            department: "AI Applications",
-            metrics: {
-                hIndex: 79,
-                i10Index: 220,
-                citations: 46000,
-                coAuthors: 100,
-                publications: 290,
-                yearsActive: 21,
-                topField: "Applied AI",
-                recentCitations: 12500
-            }
-        },
+    // Fetch professors when department is selected
+    const fetchProfessorsForDepartment = async (university, department) => {
+        try {
+            const response = await fetch(
+                `/api/professors/${encodeURIComponent(university)}/${encodeURIComponent(department)}`
+            );
+            const profList = await response.json();
+            
+            // Fetch metrics for each professor
+            const professorsWithMetrics = await Promise.all(profList.map(async (prof) => {
+                try {
+                    // Fetch awards and publications data
+                    const awardsResponse = await fetch(
+                        `/api/data/${encodeURIComponent(university)}/${encodeURIComponent(department)}/${encodeURIComponent(prof)}/awards_and_publications.csv`
+                    );
+                    const awardsData = await awardsResponse.text();
+                    
+                    // Fetch co-authors data
+                    const coAuthorsResponse = await fetch(
+                        `/api/data/${encodeURIComponent(university)}/${encodeURIComponent(department)}/${encodeURIComponent(prof)}/co_authors.csv`
+                    );
+                    const coAuthorsData = await coAuthorsResponse.text();
 
-        // UC Berkeley Professors (universityId: 4)
-        {
-            id: 10,
-            name: "Prof. Jennifer Lee",
-            universityId: 4,
-            department: "Computer Science",
-            metrics: {
-                hIndex: 90,
-                i10Index: 275,
-                citations: 62000,
-                coAuthors: 140,
-                publications: 360,
-                yearsActive: 26,
-                topField: "Distributed Systems",
-                recentCitations: 16000
-            }
-        },
-        {
-            id: 11,
-            name: "Prof. Thomas Martinez",
-            universityId: 4,
-            department: "AI Research",
-            metrics: {
-                hIndex: 86,
-                i10Index: 255,
-                citations: 54000,
-                coAuthors: 125,
-                publications: 330,
-                yearsActive: 24,
-                topField: "Reinforcement Learning",
-                recentCitations: 14500
-            }
-        },
-        {
-            id: 12,
-            name: "Prof. Rachel Wong",
-            universityId: 4,
-            department: "Data Systems",
-            metrics: {
-                hIndex: 81,
-                i10Index: 235,
-                citations: 49000,
-                coAuthors: 115,
-                publications: 310,
-                yearsActive: 23,
-                topField: "Database Systems",
-                recentCitations: 13500
-            }
+                    // Parse CSV data
+                    const awardsLines = awardsData.split('\n').filter(line => line.trim());
+                    const coAuthorsLines = coAuthorsData.split('\n').filter(line => line.trim());
+
+                    // Skip header row and get first data row
+                    const awardsValues = awardsLines[1]?.split(',') || [];
+                    const coAuthorsValues = coAuthorsLines[1]?.split(',') || [];
+
+                    return {
+                        id: `${university}-${department}-${prof}`,
+                        name: prof,
+                        university: university,
+                        department: department,
+                        metrics: {
+                            awards: parseInt(awardsValues[0]) || 0,
+                            publications: parseInt(awardsValues[1]) || 0,
+                            coAuthors: parseInt(coAuthorsValues[0]) || 0,
+                            // Add any other metrics from your CSV files here
+                        }
+                    };
+                } catch (error) {
+                    console.error(`Error fetching metrics for professor ${prof}:`, error);
+                    return {
+                        id: `${university}-${department}-${prof}`,
+                        name: prof,
+                        university: university,
+                        department: department,
+                        metrics: {
+                            awards: 0,
+                            publications: 0,
+                            coAuthors: 0
+                        }
+                    };
+                }
+            }));
+
+            return professorsWithMetrics;
+        } catch (error) {
+            console.error('Error fetching professors:', error);
+            return [];
         }
-    ];
-
-    // Filter professors based on selected university
-    const getFilteredProfessors = (universityId) => {
-        return professors.filter(prof => prof.universityId === parseInt(universityId));
     };
 
     // Handle university selection changes
     const handleUniv1Change = (e) => {
         const newUnivId = e.target.value;
         setSelectedUniv1(newUnivId);
-        setSelectedProf1(''); // Reset professor selection when university changes
+        setSelectedDept1('');
+        setSelectedProf1('');
     };
 
     const handleUniv2Change = (e) => {
         const newUnivId = e.target.value;
         setSelectedUniv2(newUnivId);
-        setSelectedProf2(''); // Reset professor selection when university changes
+        setSelectedDept2('');
+        setSelectedProf2('');
+    };
+
+    // Handle department selection changes
+    const handleDept1Change = async (e) => {
+        const newDept = e.target.value;
+        setSelectedDept1(newDept);
+        setSelectedProf1('');
+        
+        if (newDept && selectedUniv1) {
+            const university = universities.find(u => u.id === parseInt(selectedUniv1))?.name;
+            const profs = await fetchProfessorsForDepartment(university, newDept);
+            setProfessorsByDept(prev => ({
+                ...prev,
+                [`${selectedUniv1}-${newDept}`]: profs
+            }));
+        }
+    };
+
+    const handleDept2Change = async (e) => {
+        const newDept = e.target.value;
+        setSelectedDept2(newDept);
+        setSelectedProf2('');
+        
+        if (newDept && selectedUniv2) {
+            const university = universities.find(u => u.id === parseInt(selectedUniv2))?.name;
+            const profs = await fetchProfessorsForDepartment(university, newDept);
+            setProfessorsByDept(prev => ({
+                ...prev,
+                [`${selectedUniv2}-${newDept}`]: profs
+            }));
+        }
     };
 
     // Handle professor selection changes
     const handleProf1Change = (e) => {
-        const newProfId = e.target.value;
-        if (newProfId !== selectedProf2) {
-            setSelectedProf1(newProfId);
-        }
+        setSelectedProf1(e.target.value);
     };
 
     const handleProf2Change = (e) => {
-        const newProfId = e.target.value;
-        if (newProfId !== selectedProf1) {
-            setSelectedProf2(newProfId);
-        }
+        setSelectedProf2(e.target.value);
     };
 
     // Helper function to calculate percentage
     const calculatePercentage = (value1, value2) => {
         const total = value1 + value2;
         return (value1 / total) * 100;
+    };
+
+    // Get departments for selected university
+    const getUniversityDepartments = (univId) => {
+        if (!univId) return [];
+        const university = universities.find(u => u.id === parseInt(univId));
+        return departments[university?.name] || [];
+    };
+
+    // Get professors for selected department
+    const getDepartmentProfessors = (univId, dept) => {
+        if (!univId || !dept) return [];
+        return professorsByDept[`${univId}-${dept}`] || [];
+    };
+
+    // Helper function to find professor data
+    const findProfessorData = (profId) => {
+        if (!profId) return null;
+        
+        // Search through all professor lists to find matching ID
+        for (const profList of Object.values(professorsByDept)) {
+            const professor = profList.find(p => p.id === profId);
+            if (professor) {
+                return professor;
+            }
+        }
+        return null;
     };
 
     return (
@@ -333,19 +274,50 @@ export default function Content() {
                         </select>
                     </div>
 
+                    {/* Department selectors */}
+                    <div className="selector-pair">
+                        <select
+                            value={selectedDept1}
+                            onChange={handleDept1Change}
+                            disabled={!selectedUniv1}
+                            className="department-select"
+                        >
+                            <option value="">Select Department 1</option>
+                            {getUniversityDepartments(selectedUniv1).map((dept, index) => (
+                                <option key={index} value={dept}>
+                                    {dept}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={selectedDept2}
+                            onChange={handleDept2Change}
+                            disabled={!selectedUniv2}
+                            className="department-select"
+                        >
+                            <option value="">Select Department 2</option>
+                            {getUniversityDepartments(selectedUniv2).map((dept, index) => (
+                                <option key={index} value={dept}>
+                                    {dept}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     {/* Professor selectors */}
                     <div className="selector-pair">
                         <select
                             value={selectedProf1}
                             onChange={handleProf1Change}
-                            disabled={!selectedUniv1}
+                            disabled={!selectedDept1}
                         >
                             <option value="">Select Professor 1</option>
-                            {selectedUniv1 && getFilteredProfessors(selectedUniv1).map(prof => (
+                            {getDepartmentProfessors(selectedUniv1, selectedDept1).map(prof => (
                                 <option
                                     key={prof.id}
                                     value={prof.id}
-                                    disabled={prof.id === parseInt(selectedProf2)}
+                                    disabled={prof.id === selectedProf2}
                                 >
                                     {prof.name}
                                 </option>
@@ -355,14 +327,14 @@ export default function Content() {
                         <select
                             value={selectedProf2}
                             onChange={handleProf2Change}
-                            disabled={!selectedUniv2}
+                            disabled={!selectedDept2}
                         >
                             <option value="">Select Professor 2</option>
-                            {selectedUniv2 && getFilteredProfessors(selectedUniv2).map(prof => (
+                            {getDepartmentProfessors(selectedUniv2, selectedDept2).map(prof => (
                                 <option
                                     key={prof.id}
                                     value={prof.id}
-                                    disabled={prof.id === parseInt(selectedProf1)}
+                                    disabled={prof.id === selectedProf1}
                                 >
                                     {prof.name}
                                 </option>
@@ -377,23 +349,19 @@ export default function Content() {
                         <h2>Professor A</h2>
                         {selectedProf1 && (
                             <div className="prof-details">
-                                <h3>{professors.find(p => p.id === parseInt(selectedProf1))?.name}</h3>
+                                <h3>{findProfessorData(selectedProf1)?.name}</h3>
                                 <div className="metrics">
                                     <div className="metric">
-                                        <label>h-index</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf1))?.metrics.hIndex}</span>
+                                        <label>Awards</label>
+                                        <span>{findProfessorData(selectedProf1)?.metrics?.awards || 0}</span>
                                     </div>
                                     <div className="metric">
-                                        <label>Citations</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf1))?.metrics.citations}</span>
-                                    </div>
-                                    <div className="metric">
-                                        <label>i10-index</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf1))?.metrics.i10Index}</span>
+                                        <label>Publications</label>
+                                        <span>{findProfessorData(selectedProf1)?.metrics?.publications || 0}</span>
                                     </div>
                                     <div className="metric">
                                         <label>Co-authors</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf1))?.metrics.coAuthors}</span>
+                                        <span>{findProfessorData(selectedProf1)?.metrics?.coAuthors || 0}</span>
                                     </div>
                                 </div>
                             </div>
@@ -405,23 +373,19 @@ export default function Content() {
                         <h2>Professor B</h2>
                         {selectedProf2 && (
                             <div className="prof-details">
-                                <h3>{professors.find(p => p.id === parseInt(selectedProf2))?.name}</h3>
+                                <h3>{findProfessorData(selectedProf2)?.name}</h3>
                                 <div className="metrics">
                                     <div className="metric">
-                                        <label>h-index</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf2))?.metrics.hIndex}</span>
+                                        <label>Awards</label>
+                                        <span>{findProfessorData(selectedProf2)?.metrics?.awards || 0}</span>
                                     </div>
                                     <div className="metric">
-                                        <label>Citations</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf2))?.metrics.citations}</span>
-                                    </div>
-                                    <div className="metric">
-                                        <label>i10-index</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf2))?.metrics.i10Index}</span>
+                                        <label>Publications</label>
+                                        <span>{findProfessorData(selectedProf2)?.metrics?.publications || 0}</span>
                                     </div>
                                     <div className="metric">
                                         <label>Co-authors</label>
-                                        <span>{professors.find(p => p.id === parseInt(selectedProf2))?.metrics.coAuthors}</span>
+                                        <span>{findProfessorData(selectedProf2)?.metrics?.coAuthors || 0}</span>
                                     </div>
                                 </div>
                             </div>
@@ -436,71 +400,48 @@ export default function Content() {
                     <h2>Metrics Comparison</h2>
 
                     <div className="progress-metrics">
-                        {/* h-index comparison */}
+                        {/* Awards comparison */}
                         <div className="metric-row">
-                            <span className="metric-label">h-index</span>
+                            <span className="metric-label">Awards</span>
                             <div className="progress-container">
                                 <div
                                     className="progress-bar"
                                     style={{
                                         width: `${calculatePercentage(
-                                            professors.find(p => p.id === parseInt(selectedProf1))?.metrics.hIndex,
-                                            professors.find(p => p.id === parseInt(selectedProf2))?.metrics.hIndex
+                                            findProfessorData(selectedProf1)?.metrics?.awards || 0,
+                                            findProfessorData(selectedProf2)?.metrics?.awards || 0
                                         )}%`
                                     }}
                                 >
                                     <span className="progress-value">
-                                        {professors.find(p => p.id === parseInt(selectedProf1))?.metrics.hIndex}
+                                        {findProfessorData(selectedProf1)?.metrics?.awards || 0}
                                     </span>
                                 </div>
                                 <span className="progress-value right">
-                                    {professors.find(p => p.id === parseInt(selectedProf2))?.metrics.hIndex}
+                                    {findProfessorData(selectedProf2)?.metrics?.awards || 0}
                                 </span>
                             </div>
                         </div>
 
-                        {/* i10-index comparison */}
+                        {/* Publications comparison */}
                         <div className="metric-row">
-                            <span className="metric-label">i10-index</span>
+                            <span className="metric-label">Publications</span>
                             <div className="progress-container">
                                 <div
                                     className="progress-bar"
                                     style={{
                                         width: `${calculatePercentage(
-                                            professors.find(p => p.id === parseInt(selectedProf1))?.metrics.i10Index,
-                                            professors.find(p => p.id === parseInt(selectedProf2))?.metrics.i10Index
+                                            findProfessorData(selectedProf1)?.metrics?.publications || 0,
+                                            findProfessorData(selectedProf2)?.metrics?.publications || 0
                                         )}%`
                                     }}
                                 >
                                     <span className="progress-value">
-                                        {professors.find(p => p.id === parseInt(selectedProf1))?.metrics.i10Index}
+                                        {findProfessorData(selectedProf1)?.metrics?.publications || 0}
                                     </span>
                                 </div>
                                 <span className="progress-value right">
-                                    {professors.find(p => p.id === parseInt(selectedProf2))?.metrics.i10Index}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Citations comparison */}
-                        <div className="metric-row">
-                            <span className="metric-label">Citations</span>
-                            <div className="progress-container">
-                                <div
-                                    className="progress-bar"
-                                    style={{
-                                        width: `${calculatePercentage(
-                                            professors.find(p => p.id === parseInt(selectedProf1))?.metrics.citations,
-                                            professors.find(p => p.id === parseInt(selectedProf2))?.metrics.citations
-                                        )}%`
-                                    }}
-                                >
-                                    <span className="progress-value">
-                                        {professors.find(p => p.id === parseInt(selectedProf1))?.metrics.citations}
-                                    </span>
-                                </div>
-                                <span className="progress-value right">
-                                    {professors.find(p => p.id === parseInt(selectedProf2))?.metrics.citations}
+                                    {findProfessorData(selectedProf2)?.metrics?.publications || 0}
                                 </span>
                             </div>
                         </div>
@@ -513,17 +454,17 @@ export default function Content() {
                                     className="progress-bar"
                                     style={{
                                         width: `${calculatePercentage(
-                                            professors.find(p => p.id === parseInt(selectedProf1))?.metrics.coAuthors,
-                                            professors.find(p => p.id === parseInt(selectedProf2))?.metrics.coAuthors
+                                            findProfessorData(selectedProf1)?.metrics?.coAuthors || 0,
+                                            findProfessorData(selectedProf2)?.metrics?.coAuthors || 0
                                         )}%`
                                     }}
                                 >
                                     <span className="progress-value">
-                                        {professors.find(p => p.id === parseInt(selectedProf1))?.metrics.coAuthors}
+                                        {findProfessorData(selectedProf1)?.metrics?.coAuthors || 0}
                                     </span>
                                 </div>
                                 <span className="progress-value right">
-                                    {professors.find(p => p.id === parseInt(selectedProf2))?.metrics.coAuthors}
+                                    {findProfessorData(selectedProf2)?.metrics?.coAuthors || 0}
                                 </span>
                             </div>
                         </div>
