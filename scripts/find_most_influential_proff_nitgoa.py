@@ -5,7 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-data = pd.read_csv("C://Users//misba//Downloads//NITGoa_data.csv")
+data = pd.read_csv("../data/NITGoa_data.csv")
 
 print("Do you want to focus on collaborations? (Yes/No)")
 collaboration_focus = input().strip().lower()
