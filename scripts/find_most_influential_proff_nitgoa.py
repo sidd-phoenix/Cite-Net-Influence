@@ -89,6 +89,12 @@ for i, row1 in data.iterrows():
 # print(edges)
 G.add_edges_from(edges)
 
+#Degree of Centrality & Connectivity
+degree_centrality = nx.degree_centrality(G)
+degree_connectivity = dict(G.degree())
+data['Degree Centrality'] = data['Professor'].map(degree_centrality)
+data['Degree Connectivity'] = data['Professor'].map(degree_connectivity)
+
 sizes = [G.nodes[node]['size'] * 100 for node in G.nodes()]
 colors = [G.nodes[node]['h_index'] for node in G.nodes()]
 
